@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
+import { KeychainStore, KeychainUnavailableError } from "./KeychainStore.js";
 import { type SecretRef, SecretResolveError } from "./types.js";
 
 /**
@@ -9,12 +10,13 @@ import { type SecretRef, SecretResolveError } from "./types.js";
  * Backends:
  *   - env: read from process.env
  *   - file: read file contents (trimmed)
- *   - inline: return literal value (warns on every access)
- *   - keychain: deferred to a future revision; throws clearly for now
+ *   - inline: return literal value (discouraged)
+ *   - keychain: read from OS keychain via KeychainStore (macOS Keychain,
+ *               Linux libsecret, Windows Credential Manager)
  *
- * Lazy keychain support is intentional. Adding a native keychain library at
- * scaffold time blocks `npm install` on platforms missing build tools. We will
- * add it as an optional dependency once the rest of the package builds.
+ * The keychain backend uses shell-out to OS-native CLIs (`security`,
+ * `secret-tool`, PowerShell PasswordVault), so it works without any
+ * native npm dependency.
  */
 export class SecretsManager {
   private static cache = new Map<string, string>();
@@ -61,10 +63,28 @@ export class SecretsManager {
         return ref.value;
       }
       case "keychain": {
-        throw new SecretResolveError(
-          "keychain backend not yet implemented; use kind: 'env' or 'file' for now",
-          ref,
-        );
+        try {
+          const value = await KeychainStore.get(ref.service, ref.key);
+          if (value === null || value === "") {
+            throw new SecretResolveError(
+              `keychain entry not found: service='${ref.service}', key='${ref.key}'. Run \`ads-mcp setup --oauth <platform>\` to create it, or switch this account to kind: 'env' / 'file'.`,
+              ref,
+            );
+          }
+          return value;
+        } catch (err) {
+          if (err instanceof SecretResolveError) throw err;
+          if (err instanceof KeychainUnavailableError) {
+            throw new SecretResolveError(
+              `keychain backend unavailable: ${err.message}`,
+              ref,
+            );
+          }
+          throw new SecretResolveError(
+            `keychain access failed: ${(err as Error).message}`,
+            ref,
+          );
+        }
       }
     }
   }

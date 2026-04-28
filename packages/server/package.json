@@ -1,6 +1,6 @@
 {
   "name": "@manlikemuneeb/ads-mcp-server",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Unified ads-mcp MCP server entrypoint. stdio transport.",
   "type": "module",
   "license": "MIT",
@@ -17,12 +17,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@manlikemuneeb/ads-mcp-core": "^0.1.1",
-    "@manlikemuneeb/ads-mcp-ga4": "^0.1.1",
-    "@manlikemuneeb/ads-mcp-google-ads": "^0.1.1",
-    "@manlikemuneeb/ads-mcp-gsc": "^0.1.1",
-    "@manlikemuneeb/ads-mcp-linkedin": "^0.1.1",
-    "@manlikemuneeb/ads-mcp-meta": "^0.1.1",
+    "@manlikemuneeb/ads-mcp-core": "^0.2.0",
+    "@manlikemuneeb/ads-mcp-ga4": "^0.2.0",
+    "@manlikemuneeb/ads-mcp-google-ads": "^0.2.0",
+    "@manlikemuneeb/ads-mcp-gsc": "^0.2.0",
+    "@manlikemuneeb/ads-mcp-linkedin": "^0.2.0",
+    "@manlikemuneeb/ads-mcp-meta": "^0.2.0",
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "publishConfig": {

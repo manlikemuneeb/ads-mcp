@@ -36,9 +36,17 @@ describe("SecretsManager", () => {
     expect(v).toBe("literal");
   });
 
-  it("rejects keychain refs with a clear message", async () => {
+  it("rejects keychain refs when the entry doesn't exist", async () => {
+    // No matching entry exists for this service+key combo, so resolution
+    // should fail with a SecretResolveError that names the missing entry.
+    // (On hosts without a keychain backend, the same error type is raised
+    // with a different message; both branches are acceptable here.)
     await expect(
-      SecretsManager.resolve({ kind: "keychain", service: "ads-mcp", key: "x" }),
+      SecretsManager.resolve({
+        kind: "keychain",
+        service: "ads-mcp-test-nonexistent",
+        key: `__missing_${Date.now()}__`,
+      }),
     ).rejects.toBeInstanceOf(SecretResolveError);
   });
 

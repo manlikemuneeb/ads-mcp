@@ -1,4 +1,4 @@
-// TECH-DEBT(option-c-passthrough): replace with named tools per Admin API resource in Phase 2.
+// Fallback for GA4 reads not covered by named tools.
 import type { ToolDefinition } from "@manlikemuneeb/ads-mcp-core";
 import { z } from "zod";
 import { Ga4Client } from "../Ga4Client.js";
@@ -16,14 +16,17 @@ const Input = z.object({
     .string()
     .optional()
     .describe("For api=admin, the path under /v1beta/, e.g. '/properties/123/audiences'."),
-  admin_query: z.record(z.string()).optional(),
+  admin_query: z
+    .record(z.union([z.string(), z.number(), z.boolean()]))
+    .optional()
+    .describe("Query params for admin GETs. Numbers and booleans are coerced to strings."),
 });
 type Input = z.infer<typeof Input>;
 
 export const tool: ToolDefinition<Input, unknown> = {
   name: "ga4.passthrough.read",
   description:
-    "Escape hatch: call any GA4 Data API method (POST) or Admin API GET endpoint not yet covered by named tools. Read-only — no mutations.",
+    "Fallback: call any GA4 Data API method (POST) or Admin API GET endpoint not yet covered by named tools. Read-only. Prefer ga4.report.run, ga4.report.realtime, ga4.report.batch, ga4.report.pivot, ga4.accounts.list, ga4.properties.* when those fit.",
   platform: "ga4",
   isWriteTool: false,
   inputSchema: Input,
@@ -36,7 +39,11 @@ export const tool: ToolDefinition<Input, unknown> = {
       return { ...(result as Record<string, unknown>), ga4_property_label: property.label };
     }
     if (!input.admin_path) throw new Error("admin_path required when api=admin");
-    const result = await client.admin("GET", input.admin_path, undefined, input.admin_query ?? {});
+    const coerced: Record<string, string> = {};
+    if (input.admin_query) {
+      for (const [k, v] of Object.entries(input.admin_query)) coerced[k] = String(v);
+    }
+    const result = await client.admin("GET", input.admin_path, undefined, coerced);
     return { ...(result as Record<string, unknown>), ga4_property_label: property.label };
   },
 };

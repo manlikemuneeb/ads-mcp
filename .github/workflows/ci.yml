@@ -32,6 +32,26 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Install libsecret-tools (Linux only, for keychain integration tests)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y libsecret-tools dbus-x11 || true
+
+      - name: Test (keychain integration)
+        # Round-trip tests against the OS keychain. macOS Keychain is
+        # always available on macOS runners. Linux runs inside a dbus-x11
+        # session so libsecret has somewhere to talk to. We tolerate
+        # failure on Linux because GitHub-hosted runners don't always
+        # provide a usable secret service.
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            KEYCHAIN_TESTS=1 npx vitest run packages/core/tests/KeychainStore.test.ts
+          elif [ "$RUNNER_OS" = "Linux" ]; then
+            dbus-run-session -- bash -c 'KEYCHAIN_TESTS=1 npx vitest run packages/core/tests/KeychainStore.test.ts' || echo "Linux keychain backend unavailable; skipping"
+          else
+            KEYCHAIN_TESTS=1 npx vitest run packages/core/tests/KeychainStore.test.ts
+          fi
+        shell: bash
+
       - name: Lint
         run: npm run lint
         continue-on-error: true

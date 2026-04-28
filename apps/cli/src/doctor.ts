@@ -4,10 +4,13 @@ import { fileURLToPath } from "node:url";
 import {
   AuditLogger,
   ConfigManager,
+  DEFAULT_DOC_PAGES,
   DryRunGate,
   RateLimiter,
   type ToolContext,
+  checkDocPages,
   checkNpmVersion,
+  formatDriftSummary,
 } from "@manlikemuneeb/ads-mcp-core";
 import { Ga4Client } from "@manlikemuneeb/ads-mcp-ga4";
 import { GoogleAdsClient } from "@manlikemuneeb/ads-mcp-google-ads";
@@ -19,6 +22,62 @@ import { closeRl, failure, header, info, success } from "./prompt.js";
 
 export interface DoctorOptions {
   checkDrift?: boolean;
+}
+
+/**
+ * When a platform call fails, classify the error message to decide whether
+ * a stale credential is the likely cause. We trigger on the strings the
+ * platforms actually return:
+ *   LinkedIn  → "token has been revoked"
+ *   Meta      → "OAuthException", "expired", "Invalid OAuth", "session has expired"
+ *   Google    → "invalid_grant", "Invalid Credentials", "401", "Token has been expired"
+ *   GA4 / GSC → same Google substrings
+ *   Anyone    → bare "401" status surfaced through our wrapped error
+ */
+function isLikelyAuthError(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("revoked") ||
+    m.includes("expired") ||
+    m.includes("invalid_grant") ||
+    m.includes("invalid oauth") ||
+    m.includes("invalid credentials") ||
+    m.includes("invalid_client") ||
+    m.includes("oauthexception") ||
+    m.includes("session has expired") ||
+    m.includes("(401)") ||
+    /\b401\b/.test(m)
+  );
+}
+
+/**
+ * Print a follow-up hint when a platform call looked like an auth failure.
+ * Tells the user the exact command to re-authorize that account.
+ */
+function authHint(
+  platform: "meta" | "linkedin" | "google" | "ga4" | "gsc",
+  label: string,
+  message: string,
+): void {
+  if (!isLikelyAuthError(message)) return;
+  const oauthArg =
+    platform === "ga4" || platform === "gsc" ? "google" : platform;
+  info(
+    `      → Likely a stale or revoked credential. Re-authorize the '${label}' account with:`,
+  );
+  info(`        ads-mcp setup --oauth ${oauthArg}`);
+  if (platform === "linkedin" || platform === "meta") {
+    info(
+      "        (Use the same account label '" +
+        label +
+        "' to overwrite the existing entry.)",
+    );
+  }
+  if (platform === "ga4" || platform === "gsc" || platform === "google") {
+    info(
+      "        (Google Ads / GA4 / GSC share one OAuth identity; one re-auth covers all three.)",
+    );
+  }
 }
 
 /**
@@ -90,7 +149,9 @@ export async function runDoctor(opts: DoctorOptions = {}): Promise<void> {
         else failure(`    auth response missing id`);
       } catch (err) {
         ok = false;
-        failure(`    ${(err as Error).message}`);
+        const msg = (err as Error).message;
+        failure(`    ${msg}`);
+        authHint("meta", acct.label, msg);
       }
     }
   }
@@ -109,7 +170,9 @@ export async function runDoctor(opts: DoctorOptions = {}): Promise<void> {
         else failure(`    auth response missing id`);
       } catch (err) {
         ok = false;
-        failure(`    ${(err as Error).message}`);
+        const msg = (err as Error).message;
+        failure(`    ${msg}`);
+        authHint("linkedin", acct.label, msg);
       }
     }
   }
@@ -128,7 +191,9 @@ export async function runDoctor(opts: DoctorOptions = {}): Promise<void> {
         else failure(`    auth response missing customer`);
       } catch (err) {
         ok = false;
-        failure(`    ${(err as Error).message}`);
+        const msg = (err as Error).message;
+        failure(`    ${msg}`);
+        authHint("google", acct.label, msg);
       }
     }
   }
@@ -147,7 +212,9 @@ export async function runDoctor(opts: DoctorOptions = {}): Promise<void> {
         else failure(`    auth response missing name`);
       } catch (err) {
         ok = false;
-        failure(`    ${(err as Error).message}`);
+        const msg = (err as Error).message;
+        failure(`    ${msg}`);
+        authHint("ga4", acct.label, msg);
       }
     }
   }
@@ -163,12 +230,14 @@ export async function runDoctor(opts: DoctorOptions = {}): Promise<void> {
         success(`    auth ok (${count} sites accessible)`);
       } catch (err) {
         ok = false;
-        failure(`    ${(err as Error).message}`);
+        const msg = (err as Error).message;
+        failure(`    ${msg}`);
+        authHint("gsc", acct.label, msg);
       }
     }
   }
 
-  // Optional drift check (Tier 2 self-update mechanism)
+  // Optional drift checks (Tier 2 + Tier 4 self-update mechanism)
   if (opts.checkDrift) {
     header("Drift check (canonical request fixtures)");
     info(
@@ -188,6 +257,35 @@ export async function runDoctor(opts: DoctorOptions = {}): Promise<void> {
     } catch (err) {
       ok = false;
       failure(`Drift check failed: ${(err as Error).message}`);
+    }
+
+    header("Doc-page drift check");
+    info(
+      "Fetching each registered platform documentation page and comparing against ~/.ads-mcp/doc-state.json.\n",
+    );
+    try {
+      const { results: docResults } = await checkDocPages(DEFAULT_DOC_PAGES);
+      info(formatDriftSummary(docResults));
+      const docChanged = docResults.filter((r) => r.status === "changed").length;
+      if (docChanged > 0) {
+        ok = false;
+        failure(
+          `\n${docChanged} doc page${docChanged === 1 ? "" : "s"} changed since last check. Review the indicated fixtures/manifests.`,
+        );
+      } else {
+        const baselineCount = docResults.filter((r) => r.status === "baseline").length;
+        if (baselineCount === docResults.length) {
+          success(`\nBaseline established for ${baselineCount} doc pages.`);
+        } else if (baselineCount > 0) {
+          info(
+            `\n${baselineCount} new doc pages added to baseline; the rest matched their last-seen hash.`,
+          );
+        } else {
+          success("\nAll doc pages match their last-seen baseline.");
+        }
+      }
+    } catch (err) {
+      info(`Doc-page drift check failed (non-blocking): ${(err as Error).message}`);
     }
   }
 

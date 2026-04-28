@@ -1,33 +1,18 @@
 # Install ads-mcp in Claude Code / Cowork
 
-Two paths. The `.plugin` is the easiest; the project-local config is the most flexible for development.
+Two paths. The `claude mcp add` CLI is the easiest; the project-local `.mcp.json` is the most flexible for development.
 
-## Path 1 (recommended): `.plugin` drag-and-drop
+> **A note on the `.plugin` bundle.** As of v0.2.0, Claude clients' local-plugin upload UI rejects bundles inconsistently. The CLI / config-file routes below are the reliable install paths. The `.plugin` is still attached to GitHub releases for the day the upload UI stabilizes.
 
-### Build the plugin
+## Path 1 (recommended): `claude mcp add`
 
 ```bash
-cd /PATH/TO/ads-mcp
-npm install
-npm run build
-npm run pack:plugin
+npm install -g @manlikemuneeb/ads-mcp-cli
+ads-mcp setup --oauth meta   # or linkedin / google
+claude mcp add ads-mcp -- npx -y @manlikemuneeb/ads-mcp-server
 ```
 
-This produces `release/ads-mcp.plugin` (about 6 MB). It contains the compiled server, its dependencies, and a runner script. Self-contained except for Node itself, which must be 20+ and on PATH.
-
-### Install
-
-In Claude Code or Cowork:
-
-1. Open the plugin manager (varies by client; in Cowork it's accessible via the menu or settings)
-2. Drag `release/ads-mcp.plugin` into the plugin manager window
-3. Approve the install
-
-The 53 ads-mcp tools should appear in the available tool list within seconds.
-
-### Update
-
-Re-run `npm run pack:plugin` after pulling changes; uninstall the old plugin and drag the new one. Future versions will support in-place upgrade once we publish to npm.
+Restart Claude Code. The 89 ads-mcp tools appear in the available tool list.
 
 ## Path 2: project-local `.mcp.json`
 
@@ -50,6 +35,19 @@ In any Claude Code workspace, create `.mcp.json`:
 
 Restart Claude Code in that workspace. Tools appear.
 
+For the published-package version (no local checkout):
+
+```json
+{
+  "mcpServers": {
+    "ads-mcp": {
+      "command": "npx",
+      "args": ["-y", "@manlikemuneeb/ads-mcp-server"]
+    }
+  }
+}
+```
+
 ## Verifying
 
 Run any read tool from chat:
@@ -60,8 +58,8 @@ Expected output: a JSON block with each enabled platform, account list (no secre
 
 ## Troubleshooting
 
-**Plugin loads but tools don't appear.** Check the runner ran: most clients log MCP startup. Look for "ads-mcp" in the logs. If `runner.sh` complained about Node version, install Node 20+.
+**Tools don't appear after `claude mcp add`.** Restart Claude Code. If still missing, run `claude mcp list` to verify the server registered, then `claude mcp logs ads-mcp` (if available) to see startup output.
 
-**Plugin works in Path 2 but not Path 1.** The `.plugin` bundles a copy of the compiled code at packaging time; if you rebuilt locally, the plugin is stale. Re-run `npm run pack:plugin`.
+**`node not found` or `npx not found`.** GUI apps on macOS sometimes don't see your shell PATH. Replace `npx` in the config with the absolute path: `which npx` returns it (e.g. `/opt/homebrew/bin/npx`).
 
-**`node not found` in the plugin runner.** GUI apps on macOS sometimes don't see your shell PATH. Edit `runner.sh` (inside the unpacked plugin) to use the absolute Node path. Find it via `which node` in your terminal.
+**`config error: Config file not found`.** Run `ads-mcp setup` to create `~/.ads-mcp/config.json`.

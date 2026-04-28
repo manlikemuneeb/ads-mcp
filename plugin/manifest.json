@@ -1,0 +1,51 @@
+{
+  "manifest_version": "0.3",
+  "name": "ads-mcp",
+  "display_name": "Ads MCP",
+  "version": "0.2.0",
+  "description": "One MCP server, five ad platforms (Meta, LinkedIn, Google Ads, GA4, GSC). 89 named tools, OAuth wizard, OS keychain credential storage, auto-refresh, dry-run by default, audit-logged.",
+  "long_description": "ads-mcp is a unified Model Context Protocol server exposing Meta Ads, LinkedIn Ads, Google Ads, Google Analytics 4, and Google Search Console as 89 typed tools for any AI client.\n\nKey features:\n- **Full Meta surface (45 tools)** — campaigns, ad sets, ads, creatives, audiences, lookalikes, lead-gen forms, pixels, custom conversions, 6 insights flavors, targeting search/browse, delivery estimates\n- **OAuth wizard** for Meta / LinkedIn / Google with OS-keychain storage and auto-refresh\n- **Multi-account** from day one with per-account read/read_write toggle\n- **Dry-run by default** on every write — preview before commit\n- **Audit log** at ~/.ads-mcp/audit.log records every mutation\n- **Doc-page drift detection** flags when Meta or Google update a documented surface\n\nAfter installing, run `ads-mcp setup --oauth linkedin` (or meta / google) to authorize. Configuration lives at ~/.ads-mcp/config.json.",
+  "author": {
+    "name": "manlikemuneeb",
+    "url": "https://github.com/manlikemuneeb"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/manlikemuneeb/ads-mcp.git"
+  },
+  "homepage": "https://github.com/manlikemuneeb/ads-mcp",
+  "documentation": "https://github.com/manlikemuneeb/ads-mcp/blob/main/README.md",
+  "support": "https://github.com/manlikemuneeb/ads-mcp/issues",
+  "license": "MIT",
+  "server": {
+    "type": "node",
+    "entry_point": "server/packages/server/dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/packages/server/dist/index.js"],
+      "env": {}
+    }
+  },
+  "tools_generated": true,
+  "keywords": [
+    "meta-ads",
+    "linkedin-ads",
+    "google-ads",
+    "ga4",
+    "google-search-console",
+    "marketing",
+    "advertising",
+    "analytics",
+    "gaql",
+    "mcp",
+    "oauth"
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  },
+  "privacy_policies": []
+}

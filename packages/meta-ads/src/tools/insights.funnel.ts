@@ -1,40 +1,33 @@
 import type { ToolDefinition } from "@manlikemuneeb/ads-mcp-core";
 import { z } from "zod";
+import { META_INSIGHTS_FUNNEL } from "../fields.js";
 import { MetaClient } from "../MetaClient.js";
-import { baseInputShape, DatePreset } from "../schemas.js";
+import {
+  baseInputShape,
+  buildInsightsQuery,
+  insightsCommonShape,
+} from "../schemas.js";
 
 const Input = z.object({
   ...baseInputShape,
-  date_preset: DatePreset,
+  ...insightsCommonShape,
   campaign_id: z.string().optional(),
+  trend_increment: z
+    .union([z.enum(["1", "7", "28", "monthly"]), z.number().int().positive()])
+    .default("1")
+    .describe(
+      "Bucket size for the daily_trend payload. Defaults to 1 (daily). The roll-up `funnel` block always uses your time_range/date_preset whole-window aggregation.",
+    ),
 });
 type Input = z.infer<typeof Input>;
 
-const FUNNEL_FIELDS = [
-  "impressions",
-  "clicks",
-  "reach",
-  "frequency",
-  "spend",
-  "ctr",
-  "cpc",
-  "cpm",
-  "outbound_clicks",
-  "outbound_clicks_ctr",
-  "cost_per_outbound_click",
-  "website_ctr",
-  "actions",
-  "action_values",
-  "cost_per_action_type",
-  "conversion_rate_ranking",
-  "quality_ranking",
-  "engagement_rate_ranking",
-].join(",");
+// Sourced from packages/meta-ads/fixtures/fields-insights.json.
+const FUNNEL_FIELDS = META_INSIGHTS_FUNNEL;
 
 export const tool: ToolDefinition<Input, unknown> = {
   name: "meta.insights.funnel",
   description:
-    "Conversion funnel analysis: impressions → clicks → outbound clicks → actions, with quality/engagement/conversion rankings and daily trend.",
+    "Conversion funnel analysis: impressions → clicks → outbound clicks → actions, with quality/engagement/conversion rankings and a configurable trend. Supports custom date ranges, filtering, and attribution overrides.",
   platform: "meta",
   isWriteTool: false,
   inputSchema: Input,
@@ -43,13 +36,22 @@ export const tool: ToolDefinition<Input, unknown> = {
     const client = new MetaClient(account, ctx.rateLimiter);
     const parent = input.campaign_id ?? client.getAccountPath();
 
+    const sharedQuery = buildInsightsQuery(input);
+    // The funnel roll-up should not bucket by time even if the caller set
+    // time_increment, so strip it from the roll-up query.
+    const rollupQuery = { ...sharedQuery };
+    delete rollupQuery.time_increment;
+
     const [funnel, daily] = await Promise.all([
-      client.get(`/${parent}/insights`, { fields: FUNNEL_FIELDS, date_preset: input.date_preset }),
+      client.get(`/${parent}/insights`, {
+        fields: FUNNEL_FIELDS,
+        ...rollupQuery,
+      }),
       client
         .get(`/${parent}/insights`, {
           fields: "impressions,clicks,spend,outbound_clicks,actions",
-          date_preset: input.date_preset,
-          time_increment: 1,
+          time_increment: String(input.trend_increment),
+          ...rollupQuery, // share filtering / attribution
           limit: 90,
         })
         .catch((err) => ({ data: [], error: (err as Error).message })),

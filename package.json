@@ -1,6 +1,6 @@
 {
   "name": "@manlikemuneeb/ads-mcp",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "One MCP server. Five ad platforms. Read and write. Multi-account, dry-run by default, audit-logged. Works in Claude Code, Claude Desktop, Cursor, Cline, Continue, VSCode.",
   "private": true,
   "type": "module",
@@ -39,7 +39,5 @@
   "bugs": {
     "url": "https://github.com/manlikemuneeb/ads-mcp/issues"
   },
-  "dependencies": {
-    "git": "^0.1.5"
-  }
+  "dependencies": {}
 }

@@ -93,6 +93,15 @@ export function searchByAccountExpression(accountIds: string[]): string {
   return `(account:(values:List(${urns})))`;
 }
 
+/**
+ * Rest.li 2.0 search expression for finding adCreatives by campaign.
+ * Used with q=criteria on /adAccounts/{id}/creatives.
+ */
+export function searchByCampaignExpression(campaignIds: string[]): string {
+  const urns = campaignIds.map(sponsoredCampaignUrnEncoded).join(",");
+  return `(campaigns:(values:List(${urns})))`;
+}
+
 // --- Legacy helpers retained for back-compat ---
 
 export function isoToLinkedInDate(iso: string): { year: number; month: number; day: number } {

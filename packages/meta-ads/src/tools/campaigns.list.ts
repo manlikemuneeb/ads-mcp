@@ -1,5 +1,9 @@
 import type { ToolDefinition } from "@manlikemuneeb/ads-mcp-core";
 import { z } from "zod";
+import {
+  META_CAMPAIGN_FIELDS,
+  META_INSIGHTS_CAMPAIGNS_LIST,
+} from "../fields.js";
 import { MetaClient } from "../MetaClient.js";
 import { baseInputShape, DatePreset } from "../schemas.js";
 
@@ -14,31 +18,9 @@ const Input = z.object({
 });
 type Input = z.infer<typeof Input>;
 
-const CAMPAIGN_FIELDS = [
-  "name",
-  "objective",
-  "status",
-  "effective_status",
-  "daily_budget",
-  "lifetime_budget",
-  "start_time",
-  "stop_time",
-  "created_time",
-  "updated_time",
-].join(",");
-
-const INSIGHT_FIELDS = [
-  "impressions",
-  "clicks",
-  "spend",
-  "cpc",
-  "cpm",
-  "ctr",
-  "reach",
-  "frequency",
-  "actions",
-  "cost_per_action_type",
-].join(",");
+// Sourced from packages/meta-ads/fixtures/fields-insights.json.
+const CAMPAIGN_FIELDS = META_CAMPAIGN_FIELDS;
+const INSIGHT_FIELDS = META_INSIGHTS_CAMPAIGNS_LIST;
 
 export const tool: ToolDefinition<Input, unknown> = {
   name: "meta.campaigns.list",

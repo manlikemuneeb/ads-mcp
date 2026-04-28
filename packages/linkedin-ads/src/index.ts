@@ -4,6 +4,12 @@ export type { LinkedInApiError, FetchLike } from "./LinkedInClient.js";
 export { refreshAccessToken } from "./LinkedInAuth.js";
 export type { RefreshResult } from "./LinkedInAuth.js";
 export {
+  LINKEDIN_PROVIDER,
+  LINKEDIN_PROVIDER_READ_ONLY,
+  refreshLinkedInAccessToken,
+  runLinkedInOAuthFlow,
+} from "./oauth.js";
+export {
   LINKEDIN_VERSION_HEADER,
   LINKEDIN_BASE_URL,
   LINKEDIN_BASE_HEADERS,
@@ -21,6 +27,7 @@ export {
   accountsListExpression,
   campaignsListExpression,
   searchByAccountExpression,
+  searchByCampaignExpression,
   inlineDateRange,
   isoToLinkedInDate,
 } from "./urns.js";

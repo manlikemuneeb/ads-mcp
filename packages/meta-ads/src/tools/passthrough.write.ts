@@ -1,4 +1,8 @@
-// TECH-DEBT(option-c-passthrough): replace with named tools per Graph API resource in Phase 2.
+// Fallback path for endpoints not yet covered by a named tool.
+// Prefer named tools (meta.campaigns.create, meta.adsets.pause, meta.ads.resume, etc.)
+// over passthrough — they validate inputs with Zod, surface dry-run previews, and
+// produce richer audit log entries. Passthrough exists for long-tail Graph API
+// endpoints we haven't named yet.
 import type { ToolDefinition } from "@manlikemuneeb/ads-mcp-core";
 import { z } from "zod";
 import { MetaClient } from "../MetaClient.js";
@@ -16,7 +20,7 @@ type Input = z.infer<typeof Input>;
 export const tool: ToolDefinition<Input, unknown> = {
   name: "meta.passthrough.write",
   description:
-    "Escape hatch: POST/DELETE any Meta Graph API endpoint. Requires confirm_passthrough=true. Dry-run by default. Logged.",
+    "Fallback: POST/DELETE any Meta Graph API endpoint. Use only when no named tool exists. Prefer meta.campaigns.create/pause/resume/update_budget, meta.adsets.pause/resume/update_budget, meta.ads.pause/resume. Requires confirm_passthrough=true. Dry-run by default. Logged.",
   platform: "meta",
   isWriteTool: true,
   inputSchema: Input,

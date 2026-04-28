@@ -1,7 +1,12 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { CanonicalRequestFixture } from "@manlikemuneeb/ads-mcp-core";
+import {
+  DEFAULT_DOC_PAGES,
+  checkDocPages,
+  formatDriftSummary,
+  type CanonicalRequestFixture,
+} from "@manlikemuneeb/ads-mcp-core";
 import { failure, header, info, success } from "./prompt.js";
 
 interface CheckResult {
@@ -13,19 +18,29 @@ interface CheckResult {
 }
 
 /**
- * Compare each platform's pinned API version against what's reachable from the
- * official docs. Best-effort: doesn't make network calls in this version, just
- * reports what's pinned and the doc URL where users can verify currency.
+ * Surface each platform's pinned API version + run a doc-page drift check.
  *
- * Phase 2 enhancement: actually fetch the doc page and parse the current
- * version moniker from the URL or page metadata.
+ * Two-pass behavior:
+ *   Pass 1 — list pinned API versions from each platform's canonical fixture.
+ *            Tells the user what's locked in source.
+ *   Pass 2 — fetch each registered documentation page (DocPageDiff registry)
+ *            and compare the hash to ~/.ads-mcp/doc-state.json. First run
+ *            establishes baseline; subsequent runs surface drift.
+ *
+ * Exit codes:
+ *   0  — pinned versions listed, no doc drift detected (or baseline run).
+ *   2  — doc drift detected. CI integrations can gate on this.
  */
-export async function runCheckVersions(): Promise<number> {
+export async function runCheckVersions(
+  options: { skipDocDiff?: boolean } = {},
+): Promise<number> {
   header("ads-mcp version check");
-  info("Pinned API versions across platforms. Visit each doc URL to confirm currency.\n");
+  info(
+    "Pinned API versions across platforms, plus drift-detection on each platform's documentation pages.\n",
+  );
 
+  // ----- Pass 1: pinned versions from fixtures -----
   const results: CheckResult[] = [];
-
   for (const pkg of ["meta-ads", "linkedin-ads", "google-ads", "ga4", "gsc"]) {
     const fixture = loadFixtureFromWorkspace(pkg);
     if (!fixture) {
@@ -36,27 +51,63 @@ export async function runCheckVersions(): Promise<number> {
       platform: pkg,
       pinned: fixture.pinned_api_version,
       doc_url: fixture.doc_url,
-      status: "current", // best-effort default
+      status: "current",
     });
   }
 
+  info("Pinned API versions:");
   for (const r of results) {
     success(`  ${r.platform.padEnd(14)} pinned ${r.pinned}`);
     info(`    docs: ${r.doc_url}`);
   }
 
-  info("\nTo check currency manually:");
-  info("  1. Open each doc URL in a browser");
-  info("  2. Confirm the version moniker (e.g. li-lms-2026-04 for LinkedIn) is still current");
-  info("  3. If a newer version is available and stable, update packages/<platform>/src/version.ts");
-  info("  4. Run `npm test` to verify regression tests still pass against the new version");
-  info("  5. Run `ads-mcp doctor --check-drift` to verify response shape against the pinned fixtures");
+  // ----- Pass 2: doc-page drift (network) -----
+  if (options.skipDocDiff) {
+    info("\nSkipping doc-page drift check (--no-doc-diff).");
+    return 0;
+  }
 
-  info("\nNote: automated version-bump suggestions are a Phase 2 enhancement.");
-  info("This command's job today is to surface the pinned versions so you know what to check.");
+  header("Doc-page drift check");
+  info(
+    "Fetching each registered documentation page and comparing against state at ~/.ads-mcp/doc-state.json.",
+  );
+  info("First run establishes baseline; subsequent runs surface drift.\n");
 
-  // Always exit 0 from this command since we're not (yet) detecting drift
-  return 0;
+  let driftDetected = false;
+  let fetchErrors = 0;
+  try {
+    const { results: driftResults } = await checkDocPages(DEFAULT_DOC_PAGES);
+    info(formatDriftSummary(driftResults));
+    for (const r of driftResults) {
+      if (r.status === "changed") driftDetected = true;
+      if (r.status === "fetch_error") fetchErrors++;
+    }
+    info("");
+    if (driftDetected) {
+      failure(
+        "One or more doc pages have changed since last check. Review the indicated fixtures/manifests, then re-run `ads-mcp check-versions` to acknowledge.",
+      );
+    } else if (fetchErrors > 0) {
+      info(
+        `${fetchErrors} doc page${fetchErrors === 1 ? "" : "s"} could not be fetched (likely a transient network issue). Other pages were checked normally.`,
+      );
+    } else {
+      success("All registered doc pages match their last-seen baseline.");
+    }
+  } catch (err) {
+    failure(`Doc-page drift check failed: ${(err as Error).message}`);
+    info("Re-run with --no-doc-diff to skip this pass.");
+    return 0; // don't block the user just because the checker hit a snag
+  }
+
+  info("\nNext steps when drift is detected:");
+  info("  1. Open the changed doc URL and read the change log / page diff.");
+  info("  2. Update the listed `refers_to` fixture or tool source to match.");
+  info("  3. Run `npm test` to confirm regression tests still pass.");
+  info("  4. Run `ads-mcp doctor --check-drift` for live API-shape verification.");
+  info("  5. Re-run `ads-mcp check-versions` to acknowledge the new baseline.");
+
+  return driftDetected ? 2 : 0;
 }
 
 function loadFixtureFromWorkspace(pkgDirName: string): CanonicalRequestFixture | null {

@@ -60,13 +60,14 @@ jobs:
           body: |
             See [CHANGELOG.md](./CHANGELOG.md) for full release notes.
 
-            ## Install
+            ## Install (recommended: npm + config-file)
 
-            **npm:** `npm install @manlikemuneeb/ads-mcp-cli`
+            ```bash
+            npm install -g @manlikemuneeb/ads-mcp-cli
+            ads-mcp setup --oauth meta   # or linkedin / google
+            ```
 
-            **Claude Code / Cowork:** download `ads-mcp.plugin` below and drag into the plugin manager.
-
-            **Other AI clients:** add to your `mcp.json`:
+            Then add to your AI client's MCP config:
 
             ```json
             {
@@ -78,3 +79,7 @@ jobs:
               }
             }
             ```
+
+            **Per-client guides:** [Claude Desktop](./docs/install/claude-desktop.md) · [Claude Code](./docs/install/claude-code.md) · [Cursor](./docs/install/cursor.md) · [Cline](./docs/install/cline.md) · [Continue](./docs/install/continue.md)
+
+            **Fallback `.plugin` bundle** (for clients with a working plugin uploader): download `ads-mcp.plugin` below. As of v0.2.0, Claude Desktop's plugin upload UI rejects bundles inconsistently — use the npm + config-file path above instead.

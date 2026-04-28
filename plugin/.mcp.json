@@ -2,7 +2,7 @@
   "mcpServers": {
     "ads-mcp": {
       "command": "bash",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/runner.sh"]
+      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/install.sh"]
     }
   }
 }

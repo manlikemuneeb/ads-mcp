@@ -1,10 +1,27 @@
 # Claude Code / Cowork wiring
 
-Two paths.
+## Recommended: `claude mcp add` with the published npm package
 
-## Path 1: as a project-local MCP (no plugin packaging)
+```bash
+npm install -g @manlikemuneeb/ads-mcp-cli
+ads-mcp setup --oauth meta
+claude mcp add ads-mcp -- npx -y @manlikemuneeb/ads-mcp-server
+```
 
-Add to your project's `.mcp.json` (or workspace mcp config):
+## Alternative: project-local `.mcp.json` against the published package
+
+```json
+{
+  "mcpServers": {
+    "ads-mcp": {
+      "command": "npx",
+      "args": ["-y", "@manlikemuneeb/ads-mcp-server"]
+    }
+  }
+}
+```
+
+## Development: project-local `.mcp.json` against a local checkout
 
 ```json
 {
@@ -19,8 +36,4 @@ Add to your project's `.mcp.json` (or workspace mcp config):
 }
 ```
 
-Restart Claude Code. The 53 ads-mcp tools should show up in the tool list.
-
-## Path 2: as a .plugin (drag and drop)
-
-A bundled `ads-mcp.plugin` will be produced in Phase 1 Day 7. Until then, use Path 1.
+Restart Claude Code. The 89 ads-mcp tools should show up in the tool list.

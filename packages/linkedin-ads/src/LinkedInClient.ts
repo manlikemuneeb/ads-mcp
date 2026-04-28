@@ -1,9 +1,12 @@
 import {
+  type AuditLogger,
   type LinkedInAccount,
   type RateLimiter,
   RateLimitedError,
   SecretsManager,
+  TokenManager,
 } from "@manlikemuneeb/ads-mcp-core";
+import { refreshLinkedInAccessToken } from "./oauth.js";
 import { LINKEDIN_BASE_HEADERS, LINKEDIN_BASE_URL } from "./version.js";
 
 export interface LinkedInApiError extends Error {
@@ -29,14 +32,24 @@ export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
  *   - Token in URL query (LinkedIn never accepted that anyway).
  */
 export class LinkedInClient {
+  private readonly tokenManager: TokenManager | null;
+
   constructor(
     private readonly account: LinkedInAccount,
     private readonly rateLimiter: RateLimiter,
     private readonly fetchImpl: FetchLike = globalThis.fetch.bind(globalThis),
-  ) {}
+    private readonly auditLogger?: AuditLogger,
+  ) {
+    this.tokenManager = buildTokenManager(account, fetchImpl, auditLogger);
+  }
 
   getAccountId(): string {
     return this.account.ad_account_id;
+  }
+
+  /** Whether this client refreshes its access token automatically. */
+  hasAutoRefresh(): boolean {
+    return this.tokenManager !== null;
   }
 
   async get(path: string, query: Record<string, string | number | undefined> = {}): Promise<unknown> {
@@ -68,10 +81,13 @@ export class LinkedInClient {
     query: Record<string, string | number | undefined>,
     body: Record<string, unknown> | undefined,
     extraHeaders: Record<string, string>,
+    isRetry = false,
   ): Promise<unknown> {
     this.rateLimiter.acquire("linkedin");
 
-    const token = await SecretsManager.resolve(this.account.token_ref);
+    const token = this.tokenManager
+      ? await this.tokenManager.getAccessToken()
+      : await SecretsManager.resolve(this.account.token_ref);
     // Build URL manually. LinkedIn's Rest.li 2.0 protocol distinguishes
     // structural chars (raw `, : ( ) [ ] .`) from data chars (escaped) at the
     // raw URL level — generic URL-decoding loses that distinction. Callers
@@ -125,6 +141,13 @@ export class LinkedInClient {
     }
 
     if (!res.ok) {
+      // 401 with auto-refresh enabled: stale access token. Invalidate the
+      // cache and retry the call exactly once with a freshly minted token.
+      // Without auto-refresh, a 401 just bubbles up — user must re-auth.
+      if (res.status === 401 && this.tokenManager && !isRetry) {
+        this.tokenManager.invalidate();
+        return this.request(method, path, query, body, extraHeaders, true);
+      }
       if (parseFailed) {
         throw makeLinkedInError(
           `LinkedIn ${method} ${path} returned non-JSON status ${res.status}: ${text.slice(0, 200)}`,
@@ -179,4 +202,33 @@ function makeLinkedInError(
   if (typeof body.serviceErrorCode === "number") err.serviceErrorCode = body.serviceErrorCode;
   if (typeof body.message === "string") err.liMessage = body.message;
   return err;
+}
+
+/**
+ * Stand up a TokenManager for this account when the OAuth wizard configured
+ * a refresh path (refresh_token_ref + client_id_ref + client_secret_ref).
+ * Otherwise returns null and the client uses the legacy token_ref directly.
+ */
+function buildTokenManager(
+  account: LinkedInAccount,
+  fetchImpl: FetchLike,
+  auditLogger?: AuditLogger,
+): TokenManager | null {
+  if (
+    !account.refresh_token_ref ||
+    !account.client_id_ref ||
+    !account.client_secret_ref
+  ) {
+    return null;
+  }
+  return new TokenManager({
+    platform: "linkedin",
+    accountLabel: account.label,
+    refreshTokenRef: account.refresh_token_ref,
+    clientIdRef: account.client_id_ref,
+    clientSecretRef: account.client_secret_ref,
+    refreshFn: (creds, refreshToken) =>
+      refreshLinkedInAccessToken(creds, refreshToken, fetchImpl),
+    ...(auditLogger ? { auditLogger } : {}),
+  });
 }

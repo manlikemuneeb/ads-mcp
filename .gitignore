@@ -38,6 +38,7 @@ logs/
 coverage/
 .nyc_output/
 .vitest/
+vitest.config.ts.timestamp-*.mjs
 
 # temporary
 tmp/
@@ -67,12 +68,20 @@ release/**
 .idea/
 *.bak
 
-# internal dev artifacts (kept locally for AI-assisted work; never push)
+# LibreOffice / Office lock files
+.~lock.*#
+~$*
+
+# Internal release-process docs and dev artifacts (kept locally; never push)
 PROGRESS.md
 PLAN.md
 PHASE_0_CHECKLIST.md
 phase0-*.md
 CLAUDE.md
+RELEASE_v*.md
+SWAP_DEV_TO_PUBLISHED.md
+META_TOOL_REFERENCE.md
+META_TOOL_REFERENCE.xlsx
 docs/auth/_research_phase_0.md
 tests/_reference_old_server.js
 packages/core/src/ConfigManager.spec.md

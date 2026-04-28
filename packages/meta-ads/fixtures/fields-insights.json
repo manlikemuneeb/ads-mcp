@@ -1,8 +1,31 @@
 {
-  "tool": "meta.insights.*",
+  "tool": "meta.*",
   "doc_url": "https://developers.facebook.com/docs/marketing-api/insights/parameters/v25.0",
   "doc_version": "v25.0",
-  "core_fields": [
+  "_notes": "Source of truth for every field list embedded in tool source files. Tools import named slots; updating the API surface is editing this file and rebuilding. Slots are organized by tool name to keep them traceable.",
+
+  "insights_account_overview": [
+    "impressions",
+    "clicks",
+    "spend",
+    "cpc",
+    "cpm",
+    "ctr",
+    "reach",
+    "frequency",
+    "actions",
+    "cost_per_action_type",
+    "purchase_roas"
+  ],
+  "account_info": [
+    "name",
+    "account_status",
+    "currency",
+    "timezone_name",
+    "amount_spent"
+  ],
+
+  "insights_campaigns_list": [
     "impressions",
     "clicks",
     "spend",
@@ -14,22 +37,155 @@
     "actions",
     "cost_per_action_type"
   ],
-  "video_fields": [
+  "campaigns_list": [
+    "name",
+    "objective",
+    "status",
+    "effective_status",
+    "daily_budget",
+    "lifetime_budget",
+    "start_time",
+    "stop_time",
+    "created_time",
+    "updated_time"
+  ],
+
+  "insights_adsets_list": [
+    "impressions",
+    "clicks",
+    "spend",
+    "cpc",
+    "cpm",
+    "ctr",
+    "reach",
+    "frequency",
+    "actions",
+    "cost_per_action_type"
+  ],
+  "adsets_list": [
+    "name",
+    "status",
+    "effective_status",
+    "targeting",
+    "daily_budget",
+    "lifetime_budget",
+    "bid_amount",
+    "billing_event",
+    "optimization_goal",
+    "start_time",
+    "end_time"
+  ],
+
+  "insights_ads_list": [
+    "impressions",
+    "clicks",
+    "spend",
+    "cpc",
+    "cpm",
+    "ctr",
+    "reach",
+    "frequency",
+    "actions",
+    "cost_per_action_type",
     "video_p25_watched_actions",
     "video_p50_watched_actions",
     "video_p75_watched_actions",
     "video_p100_watched_actions"
   ],
-  "funnel_fields": [
+  "ads_list": [
+    "name",
+    "status",
+    "effective_status",
+    "creative",
+    "tracking_specs",
+    "created_time"
+  ],
+
+  "insights_creative": [
+    "ad_id",
+    "ad_name",
+    "impressions",
+    "clicks",
+    "spend",
+    "cpc",
+    "cpm",
+    "ctr",
+    "reach",
+    "frequency",
+    "actions",
+    "cost_per_action_type",
+    "video_p25_watched_actions",
+    "video_p50_watched_actions",
+    "video_p75_watched_actions",
+    "video_p100_watched_actions"
+  ],
+  "ads_creative_expansion": "name,status,creative{id,name,title,body,image_url,thumbnail_url,video_id,object_type},created_time",
+
+  "insights_demographics": [
+    "impressions",
+    "clicks",
+    "spend",
+    "cpc",
+    "cpm",
+    "ctr",
+    "reach",
+    "actions",
+    "cost_per_action_type"
+  ],
+
+  "insights_placements": [
+    "impressions",
+    "clicks",
+    "spend",
+    "cpc",
+    "cpm",
+    "ctr",
+    "reach",
+    "actions",
+    "cost_per_action_type"
+  ],
+
+  "insights_funnel": [
+    "impressions",
+    "clicks",
+    "reach",
+    "frequency",
+    "spend",
+    "ctr",
+    "cpc",
+    "cpm",
     "outbound_clicks",
     "outbound_clicks_ctr",
     "cost_per_outbound_click",
     "website_ctr",
+    "actions",
     "action_values",
+    "cost_per_action_type",
     "conversion_rate_ranking",
     "quality_ranking",
     "engagement_rate_ranking"
   ],
-  "purchase_fields": ["purchase_roas"],
-  "_notes": "Source of truth for Meta Insights field lists. Tool files import this at module init. Update here when Meta deprecates a field; rebuild to pick up the change."
+
+  "campaigns_pacing": [
+    "name",
+    "status",
+    "effective_status",
+    "daily_budget",
+    "lifetime_budget",
+    "budget_remaining",
+    "spend_cap",
+    "start_time",
+    "stop_time"
+  ],
+  "adsets_pacing": [
+    "name",
+    "status",
+    "effective_status",
+    "campaign_id",
+    "daily_budget",
+    "lifetime_budget",
+    "budget_remaining",
+    "start_time",
+    "end_time"
+  ]
 }

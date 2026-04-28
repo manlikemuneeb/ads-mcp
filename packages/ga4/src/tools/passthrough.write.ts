@@ -1,4 +1,7 @@
-// TECH-DEBT(option-c-passthrough): replace with named write tools per Admin API resource in Phase 2.
+// Fallback path for GA4 Admin API endpoints not yet covered by named tools.
+// Prefer named tools (ga4.conversion_events.create/delete,
+// ga4.custom_dimensions.create, ga4.custom_metrics.create) over passthrough —
+// they validate inputs with Zod and emit richer audit log entries.
 import type { ToolDefinition } from "@manlikemuneeb/ads-mcp-core";
 import { z } from "zod";
 import { Ga4Client } from "../Ga4Client.js";
@@ -20,7 +23,7 @@ type Input = z.infer<typeof Input>;
 export const tool: ToolDefinition<Input, unknown> = {
   name: "ga4.passthrough.write",
   description:
-    "Escape hatch: PATCH/POST/DELETE any GA4 Admin API endpoint not covered by named tools. Requires confirm_passthrough=true. Dry-run by default. Logged but without before/after detail.",
+    "Fallback: PATCH/POST/DELETE any GA4 Admin API endpoint not covered by named tools. Use only when no named tool exists. Prefer ga4.conversion_events.create/delete, ga4.custom_dimensions.create, ga4.custom_metrics.create. Requires confirm_passthrough=true. Dry-run by default.",
   platform: "ga4",
   isWriteTool: true,
   inputSchema: Input,

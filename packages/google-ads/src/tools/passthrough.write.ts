@@ -1,4 +1,6 @@
-// TECH-DEBT(option-c-passthrough): replace with named mutate tools per resource in Phase 2.
+// Fallback path for Google Ads :mutate operations not yet covered by named tools.
+// Prefer named tools (google_ads.campaigns.pause/resume/update_budget) over
+// passthrough — they validate inputs with Zod and surface dry-run previews.
 import type { ToolDefinition } from "@manlikemuneeb/ads-mcp-core";
 import { z } from "zod";
 import { GoogleAdsClient } from "../GoogleAdsClient.js";
@@ -18,7 +20,7 @@ type Input = z.infer<typeof Input>;
 export const tool: ToolDefinition<Input, unknown> = {
   name: "google_ads.passthrough.mutate",
   description:
-    "Escape hatch: invoke any /customers/{id}/{resource}:mutate endpoint with raw operations. Requires confirm_passthrough=true. Dry-run by default.",
+    "Fallback: invoke any /customers/{id}/{resource}:mutate endpoint with raw operations. Use only when no named tool exists. Prefer google_ads.campaigns.pause/resume/update_budget. Requires confirm_passthrough=true. Dry-run by default.",
   platform: "google_ads",
   isWriteTool: true,
   inputSchema: Input,

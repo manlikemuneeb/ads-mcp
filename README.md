@@ -2,7 +2,7 @@
 
 **One MCP server. Five ad platforms. Read and write.**
 
-`ads-mcp` is a single Model Context Protocol server that exposes **Meta Ads, LinkedIn Ads, Google Ads, Google Analytics 4, and Google Search Console** as **53 unified tools** for any AI client. Multi-account, dry-run by default, every mutation is audit-logged.
+`ads-mcp` is a single Model Context Protocol server that exposes **Meta Ads, LinkedIn Ads, Google Ads, Google Analytics 4, and Google Search Console** as **89 unified tools** for any AI client. Multi-account, dry-run by default, every mutation is audit-logged.
 
 Built for marketers, growth teams, and operators who would rather tell an AI "pause anything underperforming on Meta" than click through five separate consoles.
 
@@ -13,13 +13,15 @@ Built for marketers, growth teams, and operators who would rather tell an AI "pa
 
 ## What you get
 
-- **53 tools** spanning campaign data, demographics, placements, creatives, conversion funnels, audience insights, search analytics, URL inspection, sitemaps, and GA4 reporting
-- **Read everything** — named tools cover the common path; per-platform passthrough tools catch the long tail
-- **Write with guard rails** — pause, resume, update budgets across Meta, LinkedIn, and Google Ads. Mark conversion events in GA4. Submit sitemaps in GSC. Every write is dry-run by default; flip per-account `mode: "read_write"` in config to allow live mutations.
+- **89 tools** spanning campaign data, ad-set/ad management, creative library, custom audiences, lookalikes, lead-gen forms, pixels, custom conversions, demographics, placements, conversion funnels, action-type breakdowns, audience targeting search, delivery estimates, GA4 reporting + admin, search analytics, URL inspection, and sitemaps
+- **Full Meta surface** — 45 named tools cover end-to-end campaign workflows (plan with targeting search and delivery estimate → create campaign / ad set / ad / creative → manage budgets → pull insights → operate via pause/resume/update). Passthrough is now genuine fallback for long-tail endpoints, not the primary path.
+- **OAuth wizard** for Meta, LinkedIn, Google — `ads-mcp setup --oauth <platform>` opens browser, captures redirect, stores credentials in your **OS keychain** (macOS Keychain / Linux libsecret / Windows Credential Manager). Tokens never sit in plaintext on disk.
+- **Auto-refresh** — when a LinkedIn or Google access token expires, the relevant client transparently refreshes via stored refresh token. No interruption.
+- **Write with guard rails** — every mutation is dry-run by default; flip per-account `mode: "read_write"` in config to allow live mutations. `additional_fields` escape hatch on every create/update tool keeps you covered when Meta adds new fields between releases.
 - **Multi-account** from day one
 - **Audit log** for every mutation attempt at `~/.ads-mcp/audit.log`
-- **Doctor command** smoke-pings every enabled platform with live credentials so you know the install works before you ask the AI to do anything
-- **Drift detection** — `doctor --check-drift` exercises a known-good fixture per platform; surfaces API schema changes the moment they happen
+- **Doctor command** smoke-pings every enabled platform with live credentials. When a token is revoked or expired, doctor prints the exact `ads-mcp setup --oauth <platform>` command to re-authorize.
+- **Drift detection** — `doctor --check-drift` exercises a known-good fixture per platform AND fetches each registered docs page, comparing hashes against `~/.ads-mcp/doc-state.json` so you know when Meta or Google update a documented surface
 - **Self-update advisory** — `doctor` notifies you when a newer version is on npm
 
 ---
@@ -40,11 +42,22 @@ npm install -g @manlikemuneeb/ads-mcp-cli
 ads-mcp setup
 ```
 
-#### Option B: Claude Code / Cowork (drag-and-drop)
+Then wire it into your AI client by adding this to your client's MCP config (e.g., `~/Library/Application Support/Claude/claude_desktop_config.json` for Claude Desktop on macOS):
 
-Download the latest `ads-mcp.plugin` from the [GitHub Releases page](https://github.com/manlikemuneeb/ads-mcp/releases/latest) and drag into your client's plugin manager.
+```json
+{
+  "mcpServers": {
+    "ads-mcp": {
+      "command": "npx",
+      "args": ["-y", "@manlikemuneeb/ads-mcp-server"]
+    }
+  }
+}
+```
 
-#### Option C: from source
+Restart your client. Per-client install pages below show the exact path and any client-specific options.
+
+#### Option B: from source
 
 ```bash
 git clone https://github.com/manlikemuneeb/ads-mcp.git
@@ -54,15 +67,43 @@ npm run build
 node apps/cli/dist/index.js setup
 ```
 
+Then add to your client's MCP config with an absolute path to the built server:
+
+```json
+{
+  "mcpServers": {
+    "ads-mcp": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/ads-mcp/packages/server/dist/index.js"]
+    }
+  }
+}
+```
+
 ### Set up credentials
 
-Run the wizard:
+Two wizards depending on your preference:
+
+**OAuth wizard (recommended)** — opens browser, captures redirect on `http://localhost:8765/`, stores credentials in your OS keychain:
+
+```bash
+ads-mcp setup --oauth meta       # Meta Marketing API
+ads-mcp setup --oauth linkedin   # LinkedIn Marketing
+ads-mcp setup --oauth google     # Google Ads + GA4 + GSC (one OAuth covers all three)
+```
+
+Before running, register `http://localhost:8765/` as the redirect URI in each platform's developer portal:
+- **Meta**: App Dashboard → Use Cases → Marketing API → Settings → "Valid OAuth Redirect URIs"
+- **LinkedIn**: Developer Portal → App → Auth tab → "Authorized redirect URLs for your app"
+- **Google**: Cloud Console → APIs & Services → Credentials → OAuth client → "Authorized redirect URIs"
+
+**Token-paste wizard (fallback)** — for cases where OAuth isn't an option:
 
 ```bash
 ads-mcp setup
 ```
 
-For each platform you enable, the wizard asks for the right credentials and **smoke-tests them live before saving**. Bad tokens are caught at entry, not three commands later.
+The wizard asks for credentials and **smoke-tests them live before saving**. Bad tokens are caught at entry, not three commands later.
 
 Per-platform credential acquisition guides:
 
@@ -70,7 +111,7 @@ Per-platform credential acquisition guides:
 - **[LinkedIn](docs/auth/linkedin.md)** — OAuth 2.0 token with `r_ads`, `rw_ads`, `r_ads_reporting` scopes (~5 min, requires LinkedIn Marketing Developer Platform)
 - **[Google (Ads + GA4 + GSC)](docs/auth/google.md)** — one OAuth grant covers all three Google services (~10 min, requires Google Cloud project + dev token for Ads)
 
-The wizard writes config to `~/.ads-mcp/config.json` with `chmod 600`. Tokens are stored inline in this file in v0.1; OS keychain integration is planned for v0.2.
+The wizard writes config to `~/.ads-mcp/config.json` with `chmod 600`. OAuth-wizard tokens are stored in your OS keychain (`security` on macOS, `secret-tool` on Linux, PowerShell PasswordVault on Windows). Token-paste tokens are stored inline in the chmod-600 config file.
 
 ### Verify
 
@@ -114,15 +155,17 @@ You should get back impressions, clicks, spend, and CPM/CTR figures pulled live.
 
 | Platform | Tools | API version |
 |---|---|---|
-| Meta | 14 (9 reads, 3 writes, 2 passthrough) | Graph v25.0 |
-| LinkedIn | 8 (3 reads, 3 writes, 2 passthrough) | Marketing 202604 |
-| Google Ads | 6 (1 universal GAQL + 5 named) | REST v22 |
-| GA4 | 15 (11 reads, 2 writes, 2 passthrough) | Data v1beta + Admin v1beta |
+| Meta | 45 (20 reads, 23 writes, 2 passthrough) | Graph v25.0 |
+| LinkedIn | 11 (4 reads, 5 writes, 2 passthrough) | Marketing 202604 |
+| Google Ads | 7 (3 reads, 3 writes, 1 passthrough) | REST v22 |
+| GA4 | 17 (11 reads, 4 writes, 2 passthrough) | Data v1beta + Admin v1beta |
 | GSC | 9 (6 reads, 3 writes) | webmasters v3 + searchconsole v1 |
 | Core | 1 (`core.diagnose`) | n/a |
-| **Total** | **53 + diagnose** | |
+| **Total** | **89 + diagnose** | |
 
-Full per-tool documentation: [`docs/reference/`](docs/reference/) (work in progress).
+Full per-tool documentation:
+- [`META_TOOL_REFERENCE.md`](META_TOOL_REFERENCE.md) — Meta complete reference
+- [`META_TOOL_REFERENCE.xlsx`](META_TOOL_REFERENCE.xlsx) — Excel companion (8 sheets, filterable)
 
 ---
 
@@ -167,17 +210,19 @@ Every tool accepts an `account` parameter that defaults to the platform's `defau
 
 | Command | Purpose |
 |---|---|
-| `ads-mcp setup` | Interactive wizard with per-platform live smoke-test |
-| `ads-mcp doctor` | Validate config, ping every enabled platform with live credentials, surface npm-update advisory |
-| `ads-mcp doctor --check-drift` | Doctor + drift detection: exercises canonical fixtures and reports any response-shape changes vs the pinned schema |
-| `ads-mcp check-versions` | Show pinned API versions per platform with doc URLs to verify currency |
+| `ads-mcp setup` | Token-paste wizard with per-platform live smoke-test |
+| `ads-mcp setup --oauth meta\|linkedin\|google` | OAuth wizard: opens browser, captures redirect, stores credentials in OS keychain |
+| `ads-mcp doctor` | Validate config, ping every enabled platform with live credentials, surface npm-update advisory and re-auth hints when tokens are revoked/expired |
+| `ads-mcp doctor --check-drift` | Doctor + drift detection: exercises canonical fixtures AND fetches each registered docs page, surfacing schema or documentation changes |
+| `ads-mcp check-versions` | Show pinned API versions per platform + run doc-page drift check (returns exit 2 on drift) |
+| `ads-mcp check-versions --no-doc-diff` | Same as above without the network-dependent doc-page check |
 | `ads-mcp help` | Print help |
 
 ---
 
 ## Security
 
-- **Tokens are stored at `~/.ads-mcp/config.json` with `chmod 600`** (user-only readable). v0.2 will add OS keychain integration.
+- **OAuth-wizard tokens live in your OS keychain** (macOS Keychain, Linux libsecret, Windows Credential Manager) — never written to disk in plaintext. Token-paste tokens are stored at `~/.ads-mcp/config.json` with `chmod 600` (user-only readable).
 - **The config file is in `.gitignore`** by default in the user's `~/.ads-mcp/` location, but if you check this repo into your own VCS, ensure your `.gitignore` excludes it.
 - **Audit log** at `~/.ads-mcp/audit.log` records every mutation attempt with timestamp, account, parameters, and outcome.
 - **Dry-run by default** prevents accidental mutations on first install.
@@ -208,9 +253,9 @@ ads-mcp/
 │   └── server/              unified MCP entrypoint, stdio transport
 ├── apps/
 │   └── cli/                 ads-mcp setup, doctor, check-versions, help
-├── plugin/                  .claude-plugin manifest + .mcp.json + runner.sh
+├── plugin/                  .claude-plugin manifest + .mcp.json + runner.sh (fallback bundle for client plugin uploaders)
 ├── scripts/
-│   └── build-plugin.sh      packs everything into a drag-and-drop .plugin
+│   └── build-plugin.sh      packs the fallback .plugin bundle
 ├── docs/
 │   ├── install/             one page per AI client (Claude Code, Claude Desktop, Cursor, Cline, Continue)
 │   └── auth/                token-acquisition guides per platform
@@ -234,7 +279,7 @@ npm run pack:plugin # produces release/ads-mcp.plugin
 
 ### Releasing
 
-See [`RELEASING.md`](RELEASING.md). Release procedure: bump versions, push a `v*.*.*` tag, the GitHub Actions workflow handles the rest (npm publish + GitHub release with `.plugin` attached).
+See [`RELEASING.md`](RELEASING.md). Release procedure: bump versions, push a `v*.*.*` tag, the GitHub Actions workflow handles the rest (npm publish across all workspace packages, GitHub release created with the fallback `.plugin` attached). The supported install path is npm + config-file per `docs/install/*.md`.
 
 ---
 
@@ -247,7 +292,7 @@ See [`RELEASING.md`](RELEASING.md). Release procedure: bump versions, push a `v*
 - Setup wizard with live credential validation
 - Doctor with drift detection
 - npm-update advisory
-- Drag-and-drop .plugin for Claude Code / Cowork
+- npm + config-file install across Claude Desktop, Claude Code, Cursor, Cline, Continue
 
 **Phase 2 (v0.2.x):**
 - OAuth wizard replacing token-paste flow

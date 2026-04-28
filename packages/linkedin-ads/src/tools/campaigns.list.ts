@@ -1,5 +1,6 @@
 import type { ToolDefinition } from "@manlikemuneeb/ads-mcp-core";
 import { z } from "zod";
+import { LINKEDIN_ANALYTICS_FIELDS_CAMPAIGNS_LIST } from "../fields.js";
 import { LinkedInClient } from "../LinkedInClient.js";
 import { baseInputShape, DateRangeString } from "../schemas.js";
 import { accountsListExpression, inlineDateRange } from "../urns.js";
@@ -13,17 +14,9 @@ const Input = z.object({
 });
 type Input = z.infer<typeof Input>;
 
-const ANALYTICS_FIELDS = [
-  "dateRange",
-  "pivotValues",
-  "impressions",
-  "clicks",
-  "costInLocalCurrency",
-  "costInUsd",
-  "landingPageClicks",
-  "totalEngagements",
-  "videoViews",
-].join(",");
+// Sourced from packages/linkedin-ads/fixtures/fields-analytics.json
+// slot: fields_campaigns_list.
+const ANALYTICS_FIELDS = LINKEDIN_ANALYTICS_FIELDS_CAMPAIGNS_LIST;
 
 export const tool: ToolDefinition<Input, unknown> = {
   name: "linkedin.campaigns.list",

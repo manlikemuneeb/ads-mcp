@@ -1,6 +1,6 @@
 # Releasing ads-mcp
 
-Cuts a new release: bumps versions, runs tests, publishes to npm, attaches the `.plugin` to a GitHub release.
+Cuts a new release: bumps versions, runs tests, publishes every workspace package to npm. The `.plugin` bundle is attached to the GitHub release as a fallback artifact, but the supported install path is the npm + config-file route documented in `docs/install/*.md`.
 
 ## Prerequisites (one-time setup)
 
@@ -66,8 +66,8 @@ Pushing the tag triggers `.github/workflows/publish.yml`. It:
 2. Runs full test suite
 3. Verifies the tag matches `package.json` version (fails if mismatched)
 4. Publishes every workspace package to npm under `@manlikemuneeb/ads-mcp-*`
-5. Packs the `.plugin` bundle
-6. Creates a GitHub Release with the `.plugin` attached and auto-generated release notes
+5. Packs the `.plugin` bundle (fallback artifact, not the primary install path)
+6. Creates a GitHub Release with the `.plugin` attached and auto-generated release notes. Release notes link to `docs/install/*.md` for the supported per-client install instructions (npm + config-file).
 
 Watch the Actions tab. Most failures fix themselves on retry.
 

@@ -1,4 +1,7 @@
-// TECH-DEBT(option-c-passthrough): replace with named tools per LinkedIn /rest resource in Phase 2.
+// Fallback path for LinkedIn /rest endpoints not yet covered by named tools.
+// Prefer named tools (linkedin.campaigns.pause/resume/update_budget,
+// linkedin.creatives.pause/resume) — they validate inputs and produce
+// richer audit entries. Passthrough handles long-tail endpoints.
 import type { ToolDefinition } from "@manlikemuneeb/ads-mcp-core";
 import { z } from "zod";
 import { LinkedInClient } from "../LinkedInClient.js";
@@ -21,7 +24,7 @@ type Input = z.infer<typeof Input>;
 export const tool: ToolDefinition<Input, unknown> = {
   name: "linkedin.passthrough.write",
   description:
-    "Escape hatch: POST/PARTIAL_UPDATE/DELETE any LinkedIn /rest endpoint. Requires confirm_passthrough=true. Dry-run by default.",
+    "Fallback: POST/PARTIAL_UPDATE/DELETE any LinkedIn /rest endpoint. Use only when no named tool exists. Prefer linkedin.campaigns.pause/resume/update_budget, linkedin.creatives.pause/resume. Requires confirm_passthrough=true. Dry-run by default.",
   platform: "linkedin",
   isWriteTool: true,
   inputSchema: Input,

@@ -1,6 +1,8 @@
 import type { ToolDefinition } from "@manlikemuneeb/ads-mcp-core";
 import { z } from "zod";
+import { LINKEDIN_ANALYTICS_FIELDS_ACCOUNT_OVERVIEW } from "../fields.js";
 import { LinkedInClient } from "../LinkedInClient.js";
+import { decorateAnalyticsWithNames } from "../nameResolution.js";
 import { baseInputShape, DateRangeString } from "../schemas.js";
 import { accountsListExpression, inlineDateRange } from "../urns.js";
 
@@ -12,20 +14,9 @@ const Input = z.object({
 });
 type Input = z.infer<typeof Input>;
 
-const ANALYTICS_FIELDS = [
-  "impressions",
-  "clicks",
-  "costInLocalCurrency",
-  "costInUsd",
-  "approximateMemberReach",
-  "landingPageClicks",
-  "shares",
-  "follows",
-  "likes",
-  "comments",
-  "totalEngagements",
-  "videoViews",
-].join(",");
+// Sourced from packages/linkedin-ads/fixtures/fields-analytics.json
+// slot: fields_account_overview.
+const ANALYTICS_FIELDS = LINKEDIN_ANALYTICS_FIELDS_ACCOUNT_OVERVIEW;
 
 export const tool: ToolDefinition<Input, unknown> = {
   name: "linkedin.account.overview",
@@ -55,6 +46,22 @@ export const tool: ToolDefinition<Input, unknown> = {
           fields: ANALYTICS_FIELDS,
         })
         .catch((err) => ({ error: (err as Error).message }));
+
+      // Decorate ACCOUNT-pivot rows with the account name. We already have it
+      // from accountInfo above, so this is free (no extra API call).
+      const info = accountInfo as { name?: string } | undefined;
+      const accountName = info?.name;
+      if (
+        accountName &&
+        analytics &&
+        typeof analytics === "object" &&
+        Array.isArray((analytics as { elements?: unknown[] }).elements)
+      ) {
+        const elements = (analytics as { elements: unknown[] }).elements;
+        decorateAnalyticsWithNames(elements, {
+          [`urn:li:sponsoredAccount:${account.ad_account_id}`]: accountName,
+        });
+      }
     }
 
     return {

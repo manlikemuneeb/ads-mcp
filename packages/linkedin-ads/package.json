@@ -1,6 +1,6 @@
 {
   "name": "@manlikemuneeb/ads-mcp-linkedin",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "LinkedIn Ads tools for ads-mcp. Read + write against LinkedIn Marketing API.",
   "type": "module",
   "license": "MIT",
@@ -21,7 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@manlikemuneeb/ads-mcp-core": "^0.1.1",
+    "@manlikemuneeb/ads-mcp-core": "^0.2.0",
     "zod": "^3.23.0"
   },
   "publishConfig": {

@@ -1,7 +1,7 @@
 {
   "name": "ads-mcp",
-  "version": "0.1.1",
-  "description": "One MCP server, five ad platforms (Meta, LinkedIn, Google Ads, GA4, GSC). 53 tools, multi-account, dry-run by default, audit-logged.",
+  "version": "0.2.0",
+  "description": "One MCP server, five ad platforms (Meta, LinkedIn, Google Ads, GA4, GSC). 89 tools, OAuth wizard, OS keychain, auto-refresh, dry-run by default, audit-logged.",
   "author": {
     "name": "manlikemuneeb"
   },
