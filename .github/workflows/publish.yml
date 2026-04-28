@@ -21,8 +21,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: "https://registry.npmjs.org"
           cache: npm
+          # NOTE: registry-url intentionally omitted. With OIDC trusted publishing
+          # we don't want setup-node writing an .npmrc that templates a token —
+          # an empty token line confuses npm into token-mode and skips OIDC.
+
+      - name: Upgrade npm to >=11.5.1 (required for OIDC Trusted Publishing)
+        run: npm install -g npm@latest
+
+      - name: Verify npm version supports OIDC
+        run: |
+          NPM_VERSION=$(npm --version)
+          echo "npm version: $NPM_VERSION"
+          node -e "
+            const v = '$NPM_VERSION'.split('.').map(Number);
+            if (v[0] < 11 || (v[0] === 11 && v[1] < 5) || (v[0] === 11 && v[1] === 5 && v[2] < 1)) {
+              console.error('npm $NPM_VERSION too old; need >=11.5.1');
+              process.exit(1);
+            }
+            console.log('npm version OK for OIDC');
+          "
 
       - name: Install
         run: npm install --no-audit --no-fund
@@ -43,10 +61,43 @@ jobs:
           fi
           echo "Releasing v$ROOT_VERSION"
 
-      - name: Publish workspace packages
-        run: npm publish --workspaces --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Diagnostic — confirm OIDC env is exposed and no token leaks
+        run: |
+          echo "== which npm =="
+          which npm
+          npm --version
+          echo ""
+          echo "== OIDC env present? (presence only, no values) =="
+          [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ]   && echo "ACTIONS_ID_TOKEN_REQUEST_URL: SET"   || echo "ACTIONS_ID_TOKEN_REQUEST_URL: MISSING"
+          [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ] && echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: SET" || echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: MISSING"
+          echo ""
+          echo "== auth-related env that should NOT be set =="
+          [ -n "$NPM_TOKEN" ]       && echo "WARN: NPM_TOKEN is set"       || echo "NPM_TOKEN: unset (good)"
+          [ -n "$NODE_AUTH_TOKEN" ] && echo "WARN: NODE_AUTH_TOKEN is set" || echo "NODE_AUTH_TOKEN: unset (good)"
+          echo ""
+          echo "== .npmrc files =="
+          ls -la ~/.npmrc 2>&1 || echo "no ~/.npmrc (good)"
+          ls -la .npmrc 2>&1   || echo "no project .npmrc"
+          if [ -f ~/.npmrc ]; then
+            echo "--- ~/.npmrc contents ---"
+            cat ~/.npmrc
+          fi
+
+      - name: Force-clear any stale .npmrc that could disable OIDC
+        run: |
+          rm -f ~/.npmrc .npmrc
+          echo "Cleared all .npmrc files"
+
+      - name: Publish workspace packages (OIDC Trusted Publishing)
+        # OIDC is auto-detected via ACTIONS_ID_TOKEN_REQUEST_* env vars exposed
+        # by GitHub Actions when the workflow has `permissions: id-token: write`.
+        # Requires each package to have a trusted publisher configured on
+        # npmjs.com pointing at this repo + workflow filename `publish.yml`.
+        # Using `npm exec` to ensure the freshly-upgraded npm@latest runs (not
+        # any cached/system npm at a lower version that lacks OIDC support).
+        run: |
+          echo "Publishing with npm $(npm --version)"
+          npm publish --workspaces --access public --provenance
 
       - name: Pack .plugin
         run: npm run pack:plugin
