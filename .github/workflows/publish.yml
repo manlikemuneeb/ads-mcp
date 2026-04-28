@@ -26,23 +26,9 @@ jobs:
           # we don't want setup-node writing an .npmrc that templates a token —
           # an empty token line confuses npm into token-mode and skips OIDC.
 
-      - name: Upgrade npm to >=11.5.1 (required for OIDC Trusted Publishing)
-        run: npm install -g npm@latest
-
-      - name: Verify npm version supports OIDC
-        run: |
-          NPM_VERSION=$(npm --version)
-          echo "npm version: $NPM_VERSION"
-          node -e "
-            const v = '$NPM_VERSION'.split('.').map(Number);
-            if (v[0] < 11 || (v[0] === 11 && v[1] < 5) || (v[0] === 11 && v[1] === 5 && v[2] < 1)) {
-              console.error('npm $NPM_VERSION too old; need >=11.5.1');
-              process.exit(1);
-            }
-            console.log('npm version OK for OIDC');
-          "
-
       - name: Install
+        # Uses the system npm (10.x in Node 22's tool cache) for install — this
+        # works fine; OIDC trusted publishing is only needed for the publish step.
         run: npm install --no-audit --no-fund
 
       - name: Build
@@ -63,7 +49,7 @@ jobs:
 
       - name: Diagnostic — confirm OIDC env is exposed and no token leaks
         run: |
-          echo "== which npm =="
+          echo "== system npm =="
           which npm
           npm --version
           echo ""
@@ -93,11 +79,15 @@ jobs:
         # by GitHub Actions when the workflow has `permissions: id-token: write`.
         # Requires each package to have a trusted publisher configured on
         # npmjs.com pointing at this repo + workflow filename `publish.yml`.
-        # Using `npm exec` to ensure the freshly-upgraded npm@latest runs (not
-        # any cached/system npm at a lower version that lacks OIDC support).
+        #
+        # Use `npx -y npm@latest publish` to run npm >= 11.5.1 (required for
+        # OIDC trusted publishing). The system npm (10.x in Node 22's tool cache)
+        # is too old AND has a known broken module dep that breaks `npm install -g npm@latest`.
+        # `npx` downloads npm@latest fresh into an isolated tmp dir and runs it.
         run: |
-          echo "Publishing with npm $(npm --version)"
-          npm publish --workspaces --access public --provenance
+          echo "Running publish with npm@latest via npx..."
+          npx -y npm@latest --version
+          npx -y npm@latest publish --workspaces --access public --provenance
 
       - name: Pack .plugin
         run: npm run pack:plugin
