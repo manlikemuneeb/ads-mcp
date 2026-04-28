@@ -1,0 +1,39 @@
+{
+  "name": "@manlikemuneeb/ads-mcp-meta",
+  "version": "0.1.1",
+  "description": "Meta Ads (Facebook/Instagram) tools for ads-mcp. Read + write against Marketing API.",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "fixtures"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@manlikemuneeb/ads-mcp-core": "^0.1.1",
+    "zod": "^3.23.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manlikemuneeb/ads-mcp.git",
+    "directory": "packages/meta-ads"
+  },
+  "homepage": "https://github.com/manlikemuneeb/ads-mcp",
+  "bugs": {
+    "url": "https://github.com/manlikemuneeb/ads-mcp/issues"
+  }
+}

@@ -1,0 +1,80 @@
+name: Publish
+
+# Triggers on a tag push matching v*.*.* (e.g. v0.1.1).
+# Publishes every public workspace package to npm under @manlikemuneeb/ads-mcp-*
+# and uploads the .plugin bundle as a GitHub release asset.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Verify version matches tag
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          ROOT_VERSION=$(node -e "console.log(require('./package.json').version)")
+          if [ "$TAG_VERSION" != "$ROOT_VERSION" ]; then
+            echo "Tag $TAG_VERSION does not match package.json version $ROOT_VERSION"
+            exit 1
+          fi
+          echo "Releasing v$ROOT_VERSION"
+
+      - name: Publish workspace packages
+        run: npm publish --workspaces --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Pack .plugin
+        run: npm run pack:plugin
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/ads-mcp.plugin
+          generate_release_notes: true
+          body: |
+            See [CHANGELOG.md](./CHANGELOG.md) for full release notes.
+
+            ## Install
+
+            **npm:** `npm install @manlikemuneeb/ads-mcp-cli`
+
+            **Claude Code / Cowork:** download `ads-mcp.plugin` below and drag into the plugin manager.
+
+            **Other AI clients:** add to your `mcp.json`:
+
+            ```json
+            {
+              "mcpServers": {
+                "ads-mcp": {
+                  "command": "npx",
+                  "args": ["-y", "@manlikemuneeb/ads-mcp-server"]
+                }
+              }
+            }
+            ```

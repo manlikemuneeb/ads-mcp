@@ -1,0 +1,17 @@
+{
+  "_README": "Continue.dev reads ~/.continue/config.json. The 'experimental.modelContextProtocolServers' array is where MCP servers go.",
+
+  "experimental": {
+    "modelContextProtocolServers": [
+      {
+        "transport": {
+          "type": "stdio",
+          "command": "node",
+          "args": [
+            "/Users/YOUR_USERNAME/path/to/ads-mcp/packages/server/dist/index.js"
+          ]
+        }
+      }
+    ]
+  }
+}

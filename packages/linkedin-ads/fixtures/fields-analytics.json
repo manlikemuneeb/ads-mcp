@@ -1,0 +1,29 @@
+{
+  "tool": "linkedin.analytics",
+  "doc_url": "https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting-schema?view=li-lms-2026-04",
+  "doc_version": "li-lms-2026-04",
+  "max_fields": 20,
+  "always_include": ["dateRange", "pivotValues"],
+  "fields": [
+    "dateRange",
+    "pivotValues",
+    "impressions",
+    "clicks",
+    "costInLocalCurrency",
+    "costInUsd",
+    "approximateMemberReach",
+    "landingPageClicks",
+    "shares",
+    "follows",
+    "likes",
+    "comments",
+    "totalEngagements",
+    "videoViews",
+    "videoFirstQuartileCompletions",
+    "videoMidpointCompletions",
+    "videoThirdQuartileCompletions",
+    "videoCompletions",
+    "externalWebsiteConversions"
+  ],
+  "_notes": "LinkedIn caps at 20 fields per analytics request. dateRange + pivotValues are always included so the response carries entity context. To add fields after a LinkedIn release: edit this file, run `npm run build`, no code change needed."
+}

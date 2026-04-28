@@ -1,0 +1,19 @@
+{
+  "platform": "linkedin",
+  "name": "linkedin_analytics_canonical",
+  "method": "GET",
+  "endpoint": "/adAnalytics",
+  "params": {
+    "q": "analytics",
+    "pivot": "CAMPAIGN",
+    "timeGranularity": "DAILY",
+    "dateRange": "(start:(year:{{YEAR}},month:{{MONTH}},day:1),end:(year:{{YEAR}},month:{{MONTH}},day:{{DAY_END}}))",
+    "accounts": "List(urn%3Ali%3AsponsoredAccount%3A{{AD_ACCOUNT_ID}})",
+    "fields": "impressions,clicks"
+  },
+  "expected_response_keys": ["elements", "paging"],
+  "doc_url": "https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?view=li-lms-2026-04",
+  "doc_version": "li-lms-2026-04",
+  "pinned_api_version": "202604",
+  "description": "Doc-exact /adAnalytics call. URN colons are %3A literal. Inline dateRange. List() accounts wrapper. If LinkedIn changes the request shape (e.g. moves to dot-notation, renames fields, sunsets List() syntax), this fixture stops returning the expected envelope and surfaces the drift."
+}

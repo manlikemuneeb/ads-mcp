@@ -1,0 +1,78 @@
+# dependencies
+node_modules/
+.pnpm-store/
+.npm/
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+
+# secrets and config (never commit)
+.env
+.env.*
+!.env.example
+config.json
+~/.ads-mcp/
+secrets/
+*.pem
+*.key
+credentials.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# logs
+*.log
+audit.log
+logs/
+
+# test artifacts
+coverage/
+.nyc_output/
+.vitest/
+
+# temporary
+tmp/
+.tmp/
+*.tmp
+
+# Docker
+.dockerignore.bak
+
+# distribution artifacts (built; never commit)
+*.plugin
+*.tgz
+release/
+release/**
+
+# any rogue staging/scratch dirs the build script may produce
+**/_staging/
+**/_old_staging*/
+
+# personal credentials (extra belt-and-braces)
+*credentials*.json
+!packages/*/fixtures/canonical-request.json
+**/.ads-mcp/
+.ads-mcp-*
+
+# editor cruft
+.idea/
+*.bak
+
+# internal dev artifacts (kept locally for AI-assisted work; never push)
+PROGRESS.md
+PLAN.md
+PHASE_0_CHECKLIST.md
+phase0-*.md
+CLAUDE.md
+docs/auth/_research_phase_0.md
+tests/_reference_old_server.js
+packages/core/src/ConfigManager.spec.md

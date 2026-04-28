@@ -1,0 +1,12 @@
+{
+  "platform": "ga4",
+  "name": "ga4_property_get_canonical",
+  "method": "GET",
+  "api": "admin",
+  "endpoint": "/properties/{{PROPERTY_ID}}",
+  "expected_response_keys": ["name"],
+  "doc_url": "https://developers.google.com/analytics/devguides/config/admin/v1",
+  "doc_version": "v1beta",
+  "pinned_api_version": "v1beta",
+  "description": "Minimal Admin API property GET. Stable endpoint; failure indicates auth/scope issue or GA4 deprecating v1beta."
+}

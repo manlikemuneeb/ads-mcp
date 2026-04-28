@@ -1,0 +1,14 @@
+{
+  "_README": "Cline (VSCode extension) MCP config. Open Cline → Settings → MCP Servers → 'Edit MCP Settings'. Paste the entry below into the mcpServers object.",
+
+  "mcpServers": {
+    "ads-mcp": {
+      "command": "node",
+      "args": [
+        "/Users/YOUR_USERNAME/path/to/ads-mcp/packages/server/dist/index.js"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

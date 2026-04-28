@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/meta-ads" },
+    { "path": "./packages/linkedin-ads" },
+    { "path": "./packages/google-ads" },
+    { "path": "./packages/ga4" },
+    { "path": "./packages/gsc" },
+    { "path": "./packages/server" },
+    { "path": "./apps/cli" }
+  ]
+}

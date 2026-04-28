@@ -1,0 +1,45 @@
+{
+  "name": "@manlikemuneeb/ads-mcp",
+  "version": "0.1.1",
+  "description": "One MCP server. Five ad platforms. Read and write. Multi-account, dry-run by default, audit-logged. Works in Claude Code, Claude Desktop, Cursor, Cline, Continue, VSCode.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "manlikemuneeb",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "build:clean": "tsc -b --clean && tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "tsc -b --noEmit",
+    "pack:plugin": "bash scripts/build-plugin.sh"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manlikemuneeb/ads-mcp.git"
+  },
+  "homepage": "https://github.com/manlikemuneeb/ads-mcp",
+  "bugs": {
+    "url": "https://github.com/manlikemuneeb/ads-mcp/issues"
+  },
+  "dependencies": {
+    "git": "^0.1.5"
+  }
+}

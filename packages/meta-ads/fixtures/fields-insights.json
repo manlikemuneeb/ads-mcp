@@ -1,0 +1,35 @@
+{
+  "tool": "meta.insights.*",
+  "doc_url": "https://developers.facebook.com/docs/marketing-api/insights/parameters/v25.0",
+  "doc_version": "v25.0",
+  "core_fields": [
+    "impressions",
+    "clicks",
+    "spend",
+    "cpc",
+    "cpm",
+    "ctr",
+    "reach",
+    "frequency",
+    "actions",
+    "cost_per_action_type"
+  ],
+  "video_fields": [
+    "video_p25_watched_actions",
+    "video_p50_watched_actions",
+    "video_p75_watched_actions",
+    "video_p100_watched_actions"
+  ],
+  "funnel_fields": [
+    "outbound_clicks",
+    "outbound_clicks_ctr",
+    "cost_per_outbound_click",
+    "website_ctr",
+    "action_values",
+    "conversion_rate_ranking",
+    "quality_ranking",
+    "engagement_rate_ranking"
+  ],
+  "purchase_fields": ["purchase_roas"],
+  "_notes": "Source of truth for Meta Insights field lists. Tool files import this at module init. Update here when Meta deprecates a field; rebuild to pick up the change."
+}

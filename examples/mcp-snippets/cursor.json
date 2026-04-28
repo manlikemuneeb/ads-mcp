@@ -1,0 +1,12 @@
+{
+  "_README": "Cursor reads MCP config from ~/.cursor/mcp.json. Add the entry below. Cursor restarts the MCP server automatically when this file changes.",
+
+  "mcpServers": {
+    "ads-mcp": {
+      "command": "node",
+      "args": [
+        "/Users/YOUR_USERNAME/path/to/ads-mcp/packages/server/dist/index.js"
+      ]
+    }
+  }
+}

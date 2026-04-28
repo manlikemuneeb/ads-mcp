@@ -1,0 +1,15 @@
+{
+  "platform": "google_ads",
+  "name": "google_ads_query_canonical",
+  "method": "POST",
+  "endpoint": "/customers/{{CUSTOMER_ID}}/googleAds:search",
+  "body": {
+    "query": "SELECT customer.id, customer.descriptive_name FROM customer LIMIT 1"
+  },
+  "expected_response_keys": ["results"],
+  "expected_first_element_keys": ["customer"],
+  "doc_url": "https://developers.google.com/google-ads/api/reference/rpc/v22/GoogleAdsService",
+  "doc_version": "v22",
+  "pinned_api_version": "v22",
+  "description": "Minimal GAQL query that should always return one customer row. Google Ads sunsets versions; if v22 returns a 404 from Google's frontend, the version is past sunset and packages/google-ads/src/version.ts needs bumping."
+}

@@ -1,0 +1,12 @@
+{
+  "_README": "Add this to ~/Library/Application Support/Claude/claude_desktop_config.json (macOS) or %APPDATA%\\Claude\\claude_desktop_config.json (Windows). Replace the absolute path with where you cloned the repo. After publishing to npm, switch the command to 'npx -y @manlikemuneeb/ads-mcp'.",
+
+  "mcpServers": {
+    "ads-mcp": {
+      "command": "node",
+      "args": [
+        "/Users/YOUR_USERNAME/path/to/ads-mcp/packages/server/dist/index.js"
+      ]
+    }
+  }
+}

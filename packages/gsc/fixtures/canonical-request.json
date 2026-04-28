@@ -1,0 +1,11 @@
+{
+  "platform": "gsc",
+  "name": "gsc_sites_list_canonical",
+  "method": "GET",
+  "endpoint": "/sites",
+  "expected_response_keys": ["siteEntry"],
+  "doc_url": "https://developers.google.com/webmaster-tools/v1/sites/list",
+  "doc_version": "v3",
+  "pinned_api_version": "v3",
+  "description": "Sites list call against the authenticated user. Stable endpoint."
+}

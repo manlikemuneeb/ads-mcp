@@ -1,0 +1,16 @@
+{
+  "platform": "meta",
+  "name": "meta_account_overview_canonical",
+  "method": "GET",
+  "endpoint": "/{{AD_ACCOUNT_ID}}/insights",
+  "params": {
+    "fields": "impressions,clicks,spend",
+    "date_preset": "last_7d"
+  },
+  "expected_response_keys": ["data"],
+  "expected_first_element_keys": ["impressions", "clicks", "spend"],
+  "doc_url": "https://developers.facebook.com/docs/marketing-api/insights/",
+  "doc_version": "v25.0",
+  "pinned_api_version": "v25.0",
+  "description": "Minimal Meta Insights call against the user's ad account. If response shape changes (no `data` array, fields renamed), Meta has migrated the schema."
+}

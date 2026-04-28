@@ -1,0 +1,40 @@
+{
+  "name": "@manlikemuneeb/ads-mcp-server",
+  "version": "0.1.1",
+  "description": "Unified ads-mcp MCP server entrypoint. stdio transport.",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "ads-mcp-server": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@manlikemuneeb/ads-mcp-core": "^0.1.1",
+    "@manlikemuneeb/ads-mcp-ga4": "^0.1.1",
+    "@manlikemuneeb/ads-mcp-google-ads": "^0.1.1",
+    "@manlikemuneeb/ads-mcp-gsc": "^0.1.1",
+    "@manlikemuneeb/ads-mcp-linkedin": "^0.1.1",
+    "@manlikemuneeb/ads-mcp-meta": "^0.1.1",
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manlikemuneeb/ads-mcp.git",
+    "directory": "packages/server"
+  },
+  "homepage": "https://github.com/manlikemuneeb/ads-mcp",
+  "bugs": {
+    "url": "https://github.com/manlikemuneeb/ads-mcp/issues"
+  }
+}
